@@ -1,17 +1,27 @@
+import argparse
 import datetime
 import logging
 
 import gdax
 
-if __name__ == '__main__':
+
+def main():
     import sys
     import time
     import datetime as dt
+    parser = argparse.ArgumentParser(description='.')
+    parser.add_argument('projectRoot', type=str,
+                        help='')
+    args = parser.parse_args()
     dt = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    logFilePath = '/home/chris/logging/' + dt + '.log'
-    logging.basicConfig(filename=logFilePath, level=logging.DEBUG)
+    logFilePath = args.projectRoot + dt + '.log'
 
-    order_book = gdax.OrderBook()
+    logging.basicConfig(level=logging.DEBUG,
+                        filename=logFilePath,
+                        format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                        datefmt='%d-%m-%Y:%H:%M:%S',)
+
+    order_book = gdax.OrderBook(args.projectRoot)
 
     order_book.start()
     try:
@@ -33,3 +43,9 @@ if __name__ == '__main__':
         sys.exit(1)
     else:
         sys.exit(0)
+
+
+try:
+    main()
+except:
+    logging.exception("Oops:")
