@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 
 class Collector:
