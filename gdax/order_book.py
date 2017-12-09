@@ -16,7 +16,7 @@ from gdax.websocket_client import WebsocketClient
 
 
 class OrderBook(WebsocketClient):
-    def __init__(self, projectRoot, product_id='BTC-USD', log_to=None):
+    def __init__(self, dataFilepath, product_id='BTC-USD', log_to=None):
         super(OrderBook, self).__init__(products=product_id)
         self._asks = RBTree()
         self._bids = RBTree()
@@ -26,7 +26,7 @@ class OrderBook(WebsocketClient):
         if self._log_to:
             assert hasattr(self._log_to, 'write')
         self._current_ticker = None
-        self.collector = Collector(projectRoot)
+        self.collector = Collector(dataFilepath)
 
     @property
     def product_id(self):
