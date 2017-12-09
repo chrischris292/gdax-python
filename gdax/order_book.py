@@ -38,7 +38,7 @@ class OrderBook(WebsocketClient):
         logging.info("-- Subscribed to OrderBook! --\n")
 
     def on_close(self):
-        logging.info "order book closing"
+        logging.info("order book closing")
         self.collector.on_close()
         logging.info("\n-- OrderBook Socket Closed! --")
 
