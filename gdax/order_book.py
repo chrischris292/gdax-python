@@ -4,10 +4,12 @@
 #
 # Live order book updated from the gdax Websocket Feed
 
-from bintrees import RBTree
-from decimal import Decimal
+import atexit
 import pickle
+from decimal import Decimal
 
+from bintrees import RBTree
+from gdax.collector import Collector
 from gdax.public_client import PublicClient
 from gdax.websocket_client import WebsocketClient
 
@@ -23,6 +25,7 @@ class OrderBook(WebsocketClient):
         if self._log_to:
             assert hasattr(self._log_to, 'write')
         self._current_ticker = None
+        self.collector = Collector()
 
     @property
     def product_id(self):
@@ -34,12 +37,15 @@ class OrderBook(WebsocketClient):
         print("-- Subscribed to OrderBook! --\n")
 
     def on_close(self):
+        self.collector.on_close()
         print("\n-- OrderBook Socket Closed! --")
 
     def reset_book(self):
         self._asks = RBTree()
         self._bids = RBTree()
-        res = self._client.get_product_order_book(product_id=self.product_id, level=3)
+        res = self._client.get_product_order_book(
+            product_id=self.product_id, level=3)
+        self.collector.on_snapshot_gap(res)
         for bid in res['bids']:
             self.add({
                 'id': bid[2],
@@ -70,6 +76,7 @@ class OrderBook(WebsocketClient):
         elif sequence > self._sequence + 1:
             self.on_sequence_gap(self._sequence, sequence)
             return
+        self.collector.on_incremental_message(message)
 
         msg_type = message['type']
         if msg_type == 'open':
@@ -88,7 +95,6 @@ class OrderBook(WebsocketClient):
         self.reset_book()
         print('Error: messages missing ({} - {}). Re-initializing  book at sequence.'.format(
             gap_start, gap_end, self._sequence))
-
 
     def add(self, order):
         order = {
@@ -205,7 +211,8 @@ class OrderBook(WebsocketClient):
             except KeyError:
                 continue
             for order in this_ask:
-                result['asks'].append([order['price'], order['size'], order['id']])
+                result['asks'].append(
+                    [order['price'], order['size'], order['id']])
         for bid in self._bids:
             try:
                 # There can be a race condition here, where a price point is removed
@@ -215,7 +222,8 @@ class OrderBook(WebsocketClient):
                 continue
 
             for order in this_bid:
-                result['bids'].append([order['price'], order['size'], order['id']])
+                result['bids'].append(
+                    [order['price'], order['size'], order['id']])
         return result
 
     def get_ask(self):
@@ -241,58 +249,3 @@ class OrderBook(WebsocketClient):
 
     def set_bids(self, price, bids):
         self._bids.insert(price, bids)
-
-
-if __name__ == '__main__':
-    import sys
-    import time
-    import datetime as dt
-
-
-    class OrderBookConsole(OrderBook):
-        ''' Logs real-time changes to the bid-ask spread to the console '''
-
-        def __init__(self, product_id=None):
-            super(OrderBookConsole, self).__init__(product_id=product_id)
-
-            # latest values of bid-ask spread
-            self._bid = None
-            self._ask = None
-            self._bid_depth = None
-            self._ask_depth = None
-
-        def on_message(self, message):
-            super(OrderBookConsole, self).on_message(message)
-
-            # Calculate newest bid-ask spread
-            bid = self.get_bid()
-            bids = self.get_bids(bid)
-            bid_depth = sum([b['size'] for b in bids])
-            ask = self.get_ask()
-            asks = self.get_asks(ask)
-            ask_depth = sum([a['size'] for a in asks])
-
-            if self._bid == bid and self._ask == ask and self._bid_depth == bid_depth and self._ask_depth == ask_depth:
-                # If there are no changes to the bid-ask spread since the last update, no need to print
-                pass
-            else:
-                # If there are differences, update the cache
-                self._bid = bid
-                self._ask = ask
-                self._bid_depth = bid_depth
-                self._ask_depth = ask_depth
-                print('{} {} bid: {:.3f} @ {:.2f}\task: {:.3f} @ {:.2f}'.format(
-                    dt.datetime.now(), self.product_id, bid_depth, bid, ask_depth, ask))
-
-    order_book = OrderBookConsole()
-    order_book.start()
-    try:
-        while True:
-            time.sleep(10)
-    except KeyboardInterrupt:
-        order_book.close()
-
-    if order_book.error:
-        sys.exit(1)
-    else:
-        sys.exit(0)
