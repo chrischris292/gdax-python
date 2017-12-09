@@ -7,8 +7,9 @@ if __name__ == '__main__':
     import sys
     import time
     import datetime as dt
-    handler = logging.FileHandler('hello.log')
-    handler.setLevel(logging.INFO)
+    dt = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    handler = logging.FileHandler('home/chris/logging/' + dt + '.log')
+    handler.setLevel(logging.DEBUG)
 
     order_book = gdax.OrderBook()
 
@@ -17,7 +18,7 @@ if __name__ == '__main__':
         while True:
             now = datetime.datetime.now()
             shutoffTime = now.replace(
-                hour=19, minute=24, second=0, microsecond=0)
+                hour=19, minute=27, second=0, microsecond=0)
             print now
             if now > shutoffTime:
                 logging.info("SHUT OFF")

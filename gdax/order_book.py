@@ -5,6 +5,7 @@
 # Live order book updated from the gdax Websocket Feed
 
 import atexit
+import logging
 import pickle
 from decimal import Decimal
 
@@ -34,12 +35,12 @@ class OrderBook(WebsocketClient):
 
     def on_open(self):
         self._sequence = -1
-        print("-- Subscribed to OrderBook! --\n")
+        logging.info("-- Subscribed to OrderBook! --\n")
 
     def on_close(self):
-        print "order book closing"
+        logging.info "order book closing"
         self.collector.on_close()
-        print("\n-- OrderBook Socket Closed! --")
+        logging.info("\n-- OrderBook Socket Closed! --")
 
     def reset_book(self):
         self._asks = RBTree()

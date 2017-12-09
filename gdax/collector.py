@@ -4,8 +4,8 @@ import datetime
 class Collector:
     def __init__(self):
         dt = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        self.file = open(dt +
-                         "-gdax-market-data.json", "w+")
+        root = "/home/chris/gdax/"
+        self.file = open(root + dt + "-gdax-market-data.json", "w+")
 
     def on_incremental_message(self, message):
         data = {"Type": "Incremental", "Message": message}
