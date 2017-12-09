@@ -17,5 +17,5 @@ class Collector:
         self.file.write("\n")
 
     def on_close(self):
-        print 'My application is ending!'
+        logging.info('My application is ending!')
         self.file.close()
