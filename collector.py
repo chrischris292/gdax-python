@@ -28,8 +28,8 @@ def main():
         while True:
             now = datetime.datetime.now()
             shutoffTime = now.replace(
-                hour=19, minute=27, second=0, microsecond=0)
-            print now
+            hour=10, minute=9, second=59, microsecond=1000000-1)
+	    print now
             if now > shutoffTime:
                 logging.info("SHUT OFF")
                 order_book.close()
