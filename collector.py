@@ -1,9 +1,14 @@
+import datetime
+import logging
+
 import gdax
 
 if __name__ == '__main__':
     import sys
     import time
     import datetime as dt
+    handler = logging.FileHandler('hello.log')
+    handler.setLevel(logging.INFO)
 
     order_book = gdax.OrderBook()
 
@@ -12,12 +17,15 @@ if __name__ == '__main__':
         while True:
             now = datetime.datetime.now()
             shutoffTime = now.replace(
-                hour=19, minute=10, second=0, microsecond=0)
-            if now == shutoffTime:
-                print "SHUT OFF"
+                hour=19, minute=24, second=0, microsecond=0)
+            print now
+            if now > shutoffTime:
+                logging.info("SHUT OFF")
+                order_book.close()
                 break
-            time.sleep(5)
+            time.sleep(1)
     except KeyboardInterrupt:
+        logging.info("KEYBOARD INTERRUPT")
         order_book.close()
 
     if order_book.error:
