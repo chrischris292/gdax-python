@@ -10,7 +10,13 @@ if __name__ == '__main__':
     order_book.start()
     try:
         while True:
-            time.sleep(1)
+            now = datetime.datetime.now()
+            shutoffTime = now.replace(
+                hour=19, minute=10, second=0, microsecond=0)
+            if now == shutoffTime:
+                print "SHUT OFF"
+                break
+            time.sleep(5)
     except KeyboardInterrupt:
         order_book.close()
 
