@@ -8,7 +8,7 @@ if __name__ == '__main__':
     import time
     import datetime as dt
     dt = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    handler = logging.FileHandler('home/chris/logging/' + dt + '.log')
+    handler = logging.FileHandler('/home/chris/logging/' + dt + '.log')
     handler.setLevel(logging.DEBUG)
 
     order_book = gdax.OrderBook()
