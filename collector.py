@@ -10,26 +10,28 @@ def main():
     import time
     import datetime as dt
     parser = argparse.ArgumentParser(description='.')
-    parser.add_argument('projectRoot', type=str,
+    parser.add_argument('loggingRoot', type=str,
+                        help='')
+    parser.add_argument('collectorRoot', type=str,
                         help='')
     args = parser.parse_args()
     dt = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    logFilePath = args.projectRoot + dt + '.log'
+    logFilePath = args.loggingRoot + dt + '.log'
 
     logging.basicConfig(level=logging.DEBUG,
                         filename=logFilePath,
                         format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                         datefmt='%d-%m-%Y:%H:%M:%S',)
 
-    order_book = gdax.OrderBook(args.projectRoot)
+    order_book = gdax.OrderBook(args.collectorRoot)
 
     order_book.start()
     try:
         while True:
             now = datetime.datetime.now()
             shutoffTime = now.replace(
-            hour=10, minute=9, second=59, microsecond=1000000-1)
-	    print now
+                hour=10, minute=9, second=59, microsecond=1000000 - 1)
+            print now
             if now > shutoffTime:
                 logging.info("SHUT OFF")
                 order_book.close()
