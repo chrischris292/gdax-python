@@ -1,6 +1,6 @@
 import datetime
 import logging
-
+import json
 
 class Collector:
     def __init__(self, dataFilepath):
