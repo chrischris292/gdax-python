@@ -125,7 +125,7 @@ class WebsocketClient(object):
 
     def on_error(self, e, data=None):
         self.error = e
-        self.stop
+        self.stop = True
         logging.error('{} - data: {}'.format(e, data))
 
 
