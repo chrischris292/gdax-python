@@ -7,6 +7,14 @@ import shutil
 
 import gdax
 
+def shutOff():
+    now = datetime.datetime.now()
+    shutoffTimeLow = now.replace(
+        hour=15, minute=49, second=50)
+    shutoffTimeHigh = now.replace(
+        hour=15, minute=50, second=00)
+    return now > shutoffTimeLow and now < shutoffTimeHigh
+
 
 def main():
     import sys
@@ -26,25 +34,17 @@ def main():
                         format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                         datefmt='%d-%m-%Y:%H:%M:%S',)
     dataFilepath = args.collectorRoot + dt + "-gdax-market.data"
+    filePtr= open(dataFilepath, "w+")
 
-    order_book = gdax.OrderBook(dataFilepath)
-
-    order_book.start()
-    try:
-        while True:
-            now = datetime.datetime.now()
-            shutoffTimeLow = now.replace(
-                hour=15, minute=49, second=50)
-            shutoffTimeHigh = now.replace(
-                hour=15, minute=50, second=00)
-            if now > shutoffTimeLow and now < shutoffTimeHigh:
-                logging.info("SHUT OFF")
-                order_book.close()
+    while not shutOff():
+        order_book = gdax.OrderBook(filePtr)
+        order_book.start()
+        while not order_book.stop:
+            if shutOff():
                 break
-            time.sleep(1)
-    except KeyboardInterrupt:
-        logging.info("KEYBOARD INTERRUPT")
+            time.sleep(3)
         order_book.close()
+
 
     with open(dataFilepath, 'rb') as f_in:
         with open(dataFilepath + '.gz', 'wb') as f_out:

@@ -3,8 +3,8 @@ import logging
 import json
 
 class Collector:
-    def __init__(self, dataFilepath):
-        self.file = open(dataFilepath, "w+")
+    def __init__(self, filePtr):
+        self.file = filePtr
 
     def on_incremental_message(self, message):
         data = {"Type": "Incremental", "Message": message}
