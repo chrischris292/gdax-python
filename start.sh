@@ -1,1 +1,1 @@
-python gdax-python/collector.py logging/ gdax/ &
+python gdax-python/collector.py logging/ gdax_new/ &

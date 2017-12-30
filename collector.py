@@ -7,6 +7,7 @@ import shutil
 
 import gdax
 
+
 def shutOff():
     now = datetime.datetime.now()
     shutoffTimeLow = now.replace(
@@ -34,7 +35,7 @@ def main():
                         format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                         datefmt='%d-%m-%Y:%H:%M:%S',)
     dataFilepath = args.collectorRoot + dt + "-gdax-market.data"
-    filePtr= open(dataFilepath, "w+")
+    filePtr = open(dataFilepath, "w+")
 
     while not shutOff():
         order_book = gdax.OrderBook(filePtr)
@@ -45,21 +46,20 @@ def main():
             time.sleep(3)
         order_book.close()
 
-
     with open(dataFilepath, 'rb') as f_in:
         with open(dataFilepath + '.gz', 'wb') as f_out:
             with gzip.GzipFile(dataFilepath, 'wb', fileobj=f_out) as f_out:
                 shutil.copyfileobj(f_in, f_out)
-    logging.info("Created compressed file" + dataFilepath + '.gz')
-    logging.info("Removing original file" + dataFilepath)
-    os.remove(dataFilepath)
-    if order_book.error:
-        sys.exit(1)
-    else:
-        sys.exit(0)
+                logging.info("Created compressed file" + dataFilepath + '.gz')
+                logging.info("Removing original file" + dataFilepath)
+                os.remove(dataFilepath)
+                if order_book.error:
+                    sys.exit(1)
+                else:
+                    sys.exit(0)
 
 
 try:
     main()
 except:
-    logging.exception("Oops:")
+    logging.exception("Exception:")
