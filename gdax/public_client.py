@@ -18,7 +18,7 @@ class PublicClient(object):
 
     """
 
-    def __init__(self, api_url='https://api.gdax.com'):
+    def __init__(self, api_url='https://api.gdax.com', timeout=30):
         """Create GDAX API public client.
 
         Args:
@@ -26,11 +26,12 @@ class PublicClient(object):
 
         """
         self.url = api_url.rstrip('/')
+        self.timeout = timeout
 
     def _get(self, path, params=None):
         """Perform get request"""
 
-        r = requests.get(self.url + path, params=params, timeout=30)
+        r = requests.get(self.url + path, params=params, timeout=self.timeout)
         # r.raise_for_status()
         return r.json()
 
@@ -118,30 +119,59 @@ class PublicClient(object):
         """
         return self._get('/products/{}/ticker'.format(str(product_id)))
 
-    def get_product_trades(self, product_id):
+    def get_product_trades(self, product_id, before='', after='', limit='', result=[]):
         """List the latest trades for a product.
-
         Args:
-            product_id (str): Product
-
+             product_id (str): Product
+             before (Optional[str]): start time in ISO 8601
+             after (Optional[str]): end time in ISO 8601
+             limit (Optional[int]): the desired number of trades (can be more than 100,
+                          automatically paginated)
+             results (Optional[list]): list of results that is used for the pagination
         Returns:
-            list: Latest trades. Example::
-                [{
-                    "time": "2014-11-07T22:19:28.578544Z",
-                    "trade_id": 74,
-                    "price": "10.00000000",
-                    "size": "0.01000000",
-                    "side": "buy"
-                }, {
-                    "time": "2014-11-07T01:08:43.642366Z",
-                    "trade_id": 73,
-                    "price": "100.00000000",
-                    "size": "0.01000000",
-                    "side": "sell"
-                }]
-
+             list: Latest trades. Example::
+                 [{
+                     "time": "2014-11-07T22:19:28.578544Z",
+                     "trade_id": 74,
+                     "price": "10.00000000",
+                     "size": "0.01000000",
+                     "side": "buy"
+                 }, {
+                     "time": "2014-11-07T01:08:43.642366Z",
+                     "trade_id": 73,
+                     "price": "100.00000000",
+                     "size": "0.01000000",
+                     "side": "sell"
+         }]
         """
-        return self._get('/products/{}/trades'.format(str(product_id)))
+        url = self.url + '/products/{}/trades'.format(str(product_id))
+        params = {}
+
+        if before:
+            params['before'] = str(before)
+        if after:
+            params['after'] = str(after)
+        if limit and limit < 100:
+            # the default limit is 100
+            # we only add it if the limit is less than 100
+            params['limit'] = limit
+
+        r = requests.get(url, params=params)
+        # r.raise_for_status()
+
+        result.extend(r.json())
+
+        if 'cb-after' in r.headers and limit is not len(result):
+            # update limit
+            limit -= len(result)
+            if limit <= 0:
+                return result
+
+            # TODO: need a way to ensure that we don't get rate-limited/blocked
+            # time.sleep(0.4)
+            return self.get_product_trades(product_id=product_id, after=r.headers['cb-after'], limit=limit, result=result)
+
+        return result
 
     def get_product_historic_rates(self, product_id, start=None, end=None,
                                    granularity=None):
@@ -186,6 +216,11 @@ class PublicClient(object):
         if end is not None:
             params['end'] = end
         if granularity is not None:
+            acceptedGrans = [60, 300, 900, 3600, 21600, 86400]
+            if granularity not in acceptedGrans:
+                newGranularity = min(acceptedGrans, key=lambda x:abs(x-granularity))
+                print(granularity,' is not a valid granularity level, using',newGranularity,' instead.')
+                granularity = newGranularity
             params['granularity'] = granularity
 
         return self._get('/products/{}/candles'.format(str(product_id)), params=params)
